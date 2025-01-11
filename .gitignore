@@ -1,0 +1,11 @@
+# python
+venv
+__pycache__
+*.pyc
+
+# models
+*.pt
+*.onnx
+
+# config
+config.ini

@@ -1,0 +1,13 @@
+[server]
+host = 127.0.0.1
+port = 8080
+
+[models]
+yolov8m = ./models/yolov8m.pt
+
+[detection]
+device = cuda:0
+half = False
+defaultModel = yolov8m
+defaultConfidenceThreshold = 0.5
+defaultNmsThreshold = 0.5

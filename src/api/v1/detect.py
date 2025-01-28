@@ -5,7 +5,7 @@ from typing import List
 import cv2
 import numpy as np
 from io import BytesIO
-from models.yolo11.detect import DetectRequest
+from models.detect import DetectRequest
 
 from utils import modelManager, configManager
 from PIL import Image

@@ -63,11 +63,9 @@ async def detect(
                 counts.tolist()
             ))
 
-            print(namesCount)
-
             base64Image = ""
             if configObj.detectedImage:
-                base64Image = converter.ndarray2base64(result.plot())
+                base64Image = converter.ndarray2base64(result.plot(), "JPEG")
             
             detectResponse.append(DetectResponse(
                 model=configObj.model,

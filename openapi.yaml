@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: Ultralytics YOLO API
+  version: 1.0.0
+  description: REST API for Ultralytics YOLO v8/v11 inference.
+servers:
+  - url: http://localhost:20000
+    description: Local development server
+tags:
+  - name: YOLO API v1
+paths:
+  /v1/detect:
+    post:
+      tags:
+        - YOLO API v1
+      summary: Detect objects from images
+      description: >
+        Accepts multiple images and returns detection results including coordinates,
+        confidence, and class tags.
+      operationId: detect_v1_detect_post
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DetectMultipartRequest'
+      responses:
+        '200':
+          description: Successful detection
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DetectResponse'
+        '400':
+          description: Invalid request (e.g., unknown model)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/detectImage:
+    post:
+      tags:
+        - YOLO API v1
+      summary: Detect and return plotted image
+      description: >
+        Accepts one image, runs detection, and returns JPEG image bytes with drawn boxes.
+      operationId: detect_image_v1_detect_image_post
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DetectImageMultipartRequest'
+      responses:
+        '200':
+          description: JPEG image with plotted detections
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid request (e.g., unknown model)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/models:
+    get:
+      tags:
+        - YOLO API v1
+      summary: List available models
+      description: Returns configured model names and class dictionaries.
+      operationId: models_v1_models_get
+      responses:
+        '200':
+          description: Model list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Model'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    DetectRequest:
+      type: object
+      required:
+        - model
+      properties:
+        model:
+          type: string
+          description: Model key defined in config `[models]`.
+          example: yolov8m
+        confidenceThreshold:
+          type: number
+          format: float
+          nullable: true
+          default: 0.5
+          example: 0.5
+        nmsThreshold:
+          type: number
+          format: float
+          nullable: true
+          default: 0.4
+          example: 0.4
+        detectedImage:
+          type: boolean
+          default: false
+          example: false
+
+    DetectMultipartRequest:
+      type: object
+      required:
+        - config
+        - images
+      properties:
+        config:
+          type: string
+          description: JSON string serialized from `DetectRequest`.
+          example: '{"model":"yolov8m","confidenceThreshold":0.5,"nmsThreshold":0.4,"detectedImage":false}'
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Input images.
+
+    DetectImageMultipartRequest:
+      type: object
+      required:
+        - config
+        - image
+      properties:
+        config:
+          type: string
+          description: JSON string serialized from `DetectRequest`.
+          example: '{"model":"yolov8m","confidenceThreshold":0.5,"nmsThreshold":0.4,"detectedImage":false}'
+        image:
+          type: string
+          format: binary
+          description: Input image.
+
+    DetectionResult:
+      type: object
+      required:
+        - classId
+        - className
+        - confidence
+        - xywh
+        - xywhn
+        - xyxy
+        - xyxyn
+      properties:
+        classId:
+          type: integer
+          example: 0
+        className:
+          type: string
+          example: person
+        confidence:
+          type: number
+          format: float
+          example: 0.91
+        xywh:
+          type: array
+          items:
+            type: number
+            format: float
+          minItems: 4
+          maxItems: 4
+          example: [320.5, 180.2, 220.7, 300.1]
+        xywhn:
+          type: array
+          items:
+            type: number
+            format: float
+          minItems: 4
+          maxItems: 4
+          example: [0.5, 0.4, 0.3, 0.6]
+        xyxy:
+          type: array
+          items:
+            type: number
+            format: float
+          minItems: 4
+          maxItems: 4
+          example: [210.1, 40.2, 430.8, 340.3]
+        xyxyn:
+          type: array
+          items:
+            type: number
+            format: float
+          minItems: 4
+          maxItems: 4
+          example: [0.33, 0.08, 0.67, 0.75]
+
+    DetectResponse:
+      type: object
+      required:
+        - model
+        - confidenceThreshold
+        - nmsThreshold
+        - namesCount
+        - detections
+        - detectedImage
+        - detectTime
+        - xywh
+        - xywhn
+        - xyxy
+        - xyxyn
+      properties:
+        model:
+          type: string
+          example: yolov8m
+        confidenceThreshold:
+          type: number
+          format: float
+          nullable: true
+          example: 0.5
+        nmsThreshold:
+          type: number
+          format: float
+          nullable: true
+          example: 0.4
+        namesCount:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count by class id. JSON keys are strings.
+          example:
+            "0": 2
+            "2": 1
+        detections:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetectionResult'
+        detectedImage:
+          type: string
+          description: Base64 JPEG (only when `detectedImage=true` in config)
+          default: ""
+          example: ""
+        detectTime:
+          type: object
+          additionalProperties: true
+          description: Ultralytics speed object (e.g., preprocess/inference/postprocess)
+          example:
+            preprocess: 1.2
+            inference: 5.6
+            postprocess: 0.9
+        xywh:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: float
+        xywhn:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: float
+        xyxy:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: float
+        xyxyn:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: float
+
+    Model:
+      type: object
+      required:
+        - name
+        - names
+      properties:
+        name:
+          type: string
+          example: yolov8m
+        names:
+          type: object
+          additionalProperties:
+            type: string
+          description: Class dictionary. JSON keys are class IDs in string form.
+          example:
+            "0": person
+            "1": bicycle
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/ValidationError'
+          example: model not found in config
+
+    HTTPValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
+    ValidationError:
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      properties:
+        loc:
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: integer
+        msg:
+          type: string
+        type:
+          type: string

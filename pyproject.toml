@@ -1,0 +1,34 @@
+[project]
+name = "ultralytics-yolo-api"
+version = "0.1.0"
+description = "REST API for Ultralytics YOLO models"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastapi",
+    "pydantic",
+    "python-multipart",
+    "torch",
+    "torchaudio",
+    "torchvision",
+    "ultralytics",
+    "uvicorn",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu121" }]
+torchvision = [{ index = "pytorch-cu121" }]
+torchaudio = [{ index = "pytorch-cu121" }]

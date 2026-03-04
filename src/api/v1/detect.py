@@ -5,7 +5,7 @@ import cv2
 import torch
 import json
 import numpy as np
-from models.detect import DetectRequest, DetectResponse
+from models.detect import DetectRequest, DetectResponse, DetectionResult
 from utils import modelManager, configManager, converter
 
 detectRouter = APIRouter()
@@ -63,6 +63,32 @@ async def detect(
                 counts.tolist()
             ))
 
+            xywh = result.boxes.xywh.tolist()
+            xywhn = result.boxes.xywhn.tolist()
+            xyxy = result.boxes.xyxy.tolist()
+            xyxyn = result.boxes.xyxyn.tolist()
+            classIds = result.boxes.cls.to(torch.int).tolist()
+            confidences = result.boxes.conf.tolist()
+
+            detections: List[DetectionResult] = []
+            for cls, conf, box_xywh, box_xywhn, box_xyxy, box_xyxyn in zip(
+                classIds, confidences, xywh, xywhn, xyxy, xyxyn
+            ):
+                if isinstance(result.names, dict):
+                    className = str(result.names.get(cls, cls))
+                else:
+                    className = str(result.names[cls])
+
+                detections.append(DetectionResult(
+                    classId=cls,
+                    className=className,
+                    confidence=conf,
+                    xywh=box_xywh,
+                    xywhn=box_xywhn,
+                    xyxy=box_xyxy,
+                    xyxyn=box_xyxyn,
+                ))
+
             base64Image = ""
             if configObj.detectedImage:
                 base64Image = converter.ndarray2base64(result.plot(), "JPEG")
@@ -72,12 +98,14 @@ async def detect(
                 confidenceThreshold=configObj.confidenceThreshold,
                 nmsThreshold=configObj.nmsThreshold,
                 namesCount=namesCount,
+                detections=detections,
                 detectedImage=base64Image,
                 detectTime=result.speed,
-                xywh=result.boxes.xywh.tolist(),
-                xywhn=result.boxes.xywhn.tolist(),
-                xyxy=result.boxes.xyxy.tolist(),
-                xyxyn=result.boxes.xyxyn.tolist(),
+                # 旧フォーマットの互換性
+                # xywh=xywh,
+                # xywhn=xywhn,
+                # xyxy=xyxy,
+                # xyxyn=xyxyn,
             ))
 
         return detectResponse
